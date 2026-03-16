@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Health Tracker - IMC</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI;
+}
+
+body{
+background:linear-gradient(135deg,#3a7bd5,#00d2ff);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.app{
+width:380px;
+background:white;
+border-radius:25px;
+padding:20px;
+box-shadow:0 20px 40px rgba(0,0,0,0.25);
+overflow-y:auto;
+max-height:95vh;
+}
+
+.header{
+text-align:center;
+margin-bottom:15px;
+}
+
+.card{
+background:#f4f7fb;
+padding:15px;
+border-radius:15px;
+margin-bottom:15px;
+}
+
+label{
+font-size:14px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin-top:6px;
+margin-bottom:8px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+background:#3a7bd5;
+color:white;
+font-size:16px;
+cursor:pointer;
+margin-top:5px;
+}
+
+button:hover{
+background:#295fb0;
+}
+
+.resultado{
+text-align:center;
+font-size:18px;
+font-weight:bold;
+margin-top:8px;
+}
+
+.historial{
+max-height:120px;
+overflow-y:auto;
+font-size:13px;
+margin-top:8px;
+}
+
+.registro{
+padding:5px;
+border-bottom:1px solid #ddd;
+}
+
+.borrar{
+background:#e74c3c;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="header">
+<h1>Calculadora de IMC</h1>
+<p>☺️ Hola Karencita Bienvenida ☺️ </p>
+</div>
+
+<div class="card">
+
+<h3>Perfil de usuario</h3> 
+
+<label>Nombre</label>
+<input id="nombre">
+
+<label>Edad</label>
+<input type="number" id="edad">
+
+<label>Sexo</label>
+<select id="sexo">
+<option>Masculino</option>
+<option>Femenino</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h3>Datos corporales</h3>
+
+<label>Peso (kg)</label>
+<input type="number" id="peso">
+
+<label>Altura (m)</label>
+<input type="number" id="altura">
+
+<button onclick="calcularIMC()">Calcular IMC</button>
+
+<div class="resultado" id="resultado"></div>
+
+</div>
+
+<div class="card">
+
+<h3>Progreso IMC</h3>
+<canvas id="grafica"></canvas>
+
+</div>
+
+<div class="card">
+
+<h3>Historial</h3>
+
+<div class="historial" id="historial"></div>
+
+<button class="borrar" onclick="borrarHistorial()">Borrar historial</button>
+
+</div>
+
+</div>
+
+<script>
+
+let ctx=document.getElementById("grafica");
+
+let chart=new Chart(ctx,{
+type:"line",
+data:{
+labels:[],
+datasets:[{
+label:"IMC",
+data:[],
+borderWidth:3,
+pointBackgroundColor:[]
+}]
+},
+options:{
+scales:{
+y:{
+beginAtZero:true
+}
+}
+}
+});
+
+function calcularIMC(){
+
+let peso=document.getElementById("peso").value;
+let altura=document.getElementById("altura").value;
+
+let imc=peso/(altura*altura);
+imc=imc.toFixed(2);
+
+let estado="";
+let color="";
+
+if(imc<18.5){
+estado="Bajo peso";
+color="#3498db";
+}
+else if(imc<24.9){
+estado="Normal";
+color="#2ecc71";
+}
+else if(imc<29.9){
+estado="Sobrepeso";
+color="#f39c12";
+}
+else{
+estado="Obesidad";
+color="#e74c3c";
+}
+
+document.getElementById("resultado").innerHTML=
+"IMC: "+imc+" ("+estado+")";
+
+guardarHistorial(imc);
+
+actualizarGrafica(imc,color);
+
+}
+
+function guardarHistorial(imc){
+
+let historial=JSON.parse(localStorage.getItem("historialIMC"))||[];
+
+let fecha=new Date().toLocaleDateString();
+
+historial.push({valor:imc,fecha:fecha});
+
+localStorage.setItem("historialIMC",JSON.stringify(historial));
+
+mostrarHistorial();
+
+}
+
+function mostrarHistorial(){
+
+let historial=JSON.parse(localStorage.getItem("historialIMC"))||[];
+
+let cont=document.getElementById("historial");
+
+cont.innerHTML="";
+
+historial.forEach(d=>{
+
+cont.innerHTML+=
+"<div class='registro'>IMC: "+d.valor+" - "+d.fecha+"</div>";
+
+});
+
+}
+
+function borrarHistorial(){
+
+localStorage.removeItem("historialIMC");
+
+chart.data.labels=[];
+chart.data.datasets[0].data=[];
+chart.data.datasets[0].pointBackgroundColor=[];
+chart.update();
+
+mostrarHistorial();
+
+}
+
+function actualizarGrafica(imc,color){
+
+chart.data.labels.push("R"+(chart.data.labels.length+1));
+
+chart.data.datasets[0].data.push(imc);
+
+chart.data.datasets[0].pointBackgroundColor.push(color);
+
+chart.update();
+
+}
+
+mostrarHistorial();
+
+</script>
+
+</body>
+</html>
+
